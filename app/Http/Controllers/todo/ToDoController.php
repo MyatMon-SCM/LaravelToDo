@@ -5,8 +5,6 @@ namespace App\Http\Controllers\todo;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use PhpParser\Node\Expr\FuncCall;
 
 /**
  * This is Post controller.
@@ -51,7 +49,6 @@ class ToDoController extends Controller
 
     /**
      * To view Todo
-     * @param
      * @return view todoList page with array $todos
      */
     public function showToDo() {
@@ -61,7 +58,8 @@ class ToDoController extends Controller
 
     /**
      * To Update Todo
-     * 
+     * @param $id
+     * @return view update page with array $todos
      */
     public function updateToDoView($id) {
         $todos = DB::table('todos')->where('id', $id)->get();
@@ -71,18 +69,27 @@ class ToDoController extends Controller
     /**
      * * To update Todo
      * @param Request $request name, instruction
-     * @return view welcome page
+     * @return view todoList page
      */
     public function updateToDo(Request $request) {
         $id = $request->id;
         $name = $request->name;
         $instruction = $request->instruction;
-        DB::update('update todos set name = ?, instruction = ? where id = ?',[$name, $instruction, $id]);
-        return redirect()->route('welcome-view');
+        DB::transaction(function () use ($name, $instruction, $id) {
+            DB::update('update todos set name = ?, instruction = ? where id = ?',[$name, $instruction, $id]);
+        });
+        return redirect()->route('todo-show-view');
     }
 
+    /**
+     * To delete ToDo
+     * @param $id
+     * @return view todoList page
+     */
     public function deleteToDo($id) {
-        DB::delete("delete from todos where id = ?", [$id]);
+        DB::transaction(function () use ($id) {
+            DB::delete("delete from todos where id = ?", [$id]);
+        });
         return redirect()->route('todo-show-view');
     }
 }
