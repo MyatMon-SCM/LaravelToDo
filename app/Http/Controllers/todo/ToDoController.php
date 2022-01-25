@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\todo;
 
+use App\Contracts\Services\Todo\TodoServiceInterface;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Http\Requests\TodoPostRequest;
 
 /**
  * This is Post controller.
@@ -13,13 +13,15 @@ use Illuminate\Support\Facades\DB;
 class ToDoController extends Controller
 {
 
+    private $todoService;
   /**
    * Create a new controller instance.
    *
    * @return void
    */
-  public function __construct()
+  public function __construct(TodoServiceInterface $todoServiceInterface)
   {
+    $this->todoService = $todoServiceInterface;
 
   }
 
@@ -36,34 +38,29 @@ class ToDoController extends Controller
     /**
      * To save Todo
      * @param Request $request name, instruction
-     * @return view welcome page
+     * @return view todoList page
      */
-    public function createToDo(Request $request) {
-        $name = $request->name;
-        $instruction = $request->instruction;
-        DB::transaction(function () use ($name, $instruction) {
-            DB::insert("insert into todos (name, instruction) values (?,?) ", [$name, $instruction]);
-        });
-        return redirect()->route('welcome-view');
+    public function createToDo(TodoPostRequest $request) {
+        $this->todoService->saveTodo($request->name, $request->instruction);
+        return redirect()->route('todo-show-view');
     }
 
     /**
-     * To view Todo
+     * To show Todos data
      * @return view todoList page with array $todos
      */
     public function showToDo() {
-        $todos = DB::table('todos')->get();
+        $todos = $this->todoService->getTodo();
         return view('todo.todoList', ['todos' => $todos]);
     }
 
     /**
      * To Update Todo
-     * @param $id
+     * @param string $id todos id
      * @return view update page with array $todos
      */
     public function updateToDoView($id) {
-        $todos = DB::table('todos')->where('id', $id)->get();
-        // Log::info($todos);
+        $todos = $this->todoService->getTodoById($id);
         return view('todo.update', ['todos' => $todos]);
     }
     /**
@@ -71,25 +68,18 @@ class ToDoController extends Controller
      * @param Request $request name, instruction
      * @return view todoList page
      */
-    public function updateToDo(Request $request) {
-        $id = $request->id;
-        $name = $request->name;
-        $instruction = $request->instruction;
-        DB::transaction(function () use ($name, $instruction, $id) {
-            DB::update('update todos set name = ?, instruction = ? where id = ?',[$name, $instruction, $id]);
-        });
+    public function updateToDo(TodoPostRequest $request) {
+        $this->todoService->updateToDo($request->id, $request->name, $request->instruction);
         return redirect()->route('todo-show-view');
     }
 
     /**
      * To delete ToDo
-     * @param $id
+     * @param string $id todos id
      * @return view todoList page
      */
     public function deleteToDo($id) {
-        DB::transaction(function () use ($id) {
-            DB::delete("delete from todos where id = ?", [$id]);
-        });
+        $this->todoService->deleteTodo($id);
         return redirect()->route('todo-show-view');
     }
 }

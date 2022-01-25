@@ -29,10 +29,16 @@
             <input type="hidden" id="id" name="id" value="{{ $todos[0]->id }}">
             <label for="name">Name</label>
             <input type="text" id="name" name="name" value="{{ $todos[0]->name }}">
+            @error('name')
+                <span role="alert"><strong> {{ $message }}</strong></span>
+            @enderror
         </div>
         <div>
             <label for="instruction">Instruction</label>
             <input type="text" id="instruction" name="instruction" value="{{ $todos[0]->instruction }}">
+            @error('instruction')
+                <span role="alert"><strong> {{ $message }}</strong></span>
+            @enderror
         </div>
         <div>
             <button type="submit">Update</button>
